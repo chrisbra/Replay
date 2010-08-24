@@ -5,9 +5,9 @@ plugin/ReplayPlugin.vim	[[[1
 34
 " Replay.vim - Replay your editing Session
 " -------------------------------------------------------------
-" Version: 0.1
+" Version: 0.2
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Mon, 23 Aug 2010 21:11:40 +0200
+" Last Change: Tue, 24 Aug 2010 13:57:34 +0200
 "
 " Script: http://www.vim.org/scripts/script.php?script_id=
 " Copyright:   (c) 2009, 2010 by Christian Brabandt
@@ -16,7 +16,7 @@ plugin/ReplayPlugin.vim	[[[1
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: XXX 2 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 3 :AutoInstall: Replay.vim
 "
 " Init:
 if exists("g:loaded_replay") || &cp || &ul == -1
@@ -38,12 +38,12 @@ let &cpo=s:cpo
 unlet s:cpo
 " vim: ts=4 sts=4 fdm=marker com+=l\:\" fdm=syntax
 autoload/Replay.vim	[[[1
-132
+146
 " Replay.vim - Replay your editing Session
 " -------------------------------------------------------------
-" Version: 0.1
+" Version: 0.2
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Mon, 23 Aug 2010 21:11:40 +0200
+" Last Change: Tue, 24 Aug 2010 13:57:34 +0200
 "
 " Script: http://www.vim.org/scripts/script.php?script_id=
 " Copyright:   (c) 2009, 2010 by Christian Brabandt
@@ -52,7 +52,7 @@ autoload/Replay.vim	[[[1
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: XXX 2 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 3 :AutoInstall: Replay.vim
 "
 fun! <sid>WarningMsg(msg)"{{{1
         echohl WarningMsg
@@ -73,7 +73,7 @@ fun! <sid>Init() "{{{1
 		let b:replay_data.Default.start=0
     endif
     " Customization
-    let s:replay_speed  = (exists("g:replay_speed")   ? g:replay_speed    : 100)
+    let s:replay_speed  = (exists("g:replay_speed")   ? g:replay_speed    : 200)
 endfun 
 
 fun! Replay#Replay(tag) "{{{1
@@ -90,9 +90,10 @@ fun! Replay#Replay(tag) "{{{1
 	let curpos=winsaveview()
     let undo_change=get(b:replay_data, tag)
     let stop_change=<sid>LastChange()
+
     if undo_change.start==0
         undo 1
-        g-
+        norm! g-
     else
         if exists("undo_change.stop")
             let stop_change=undo_change.stop
@@ -101,8 +102,9 @@ fun! Replay#Replay(tag) "{{{1
     endif
     let t=changenr()
     while t < stop_change
+        silent norm! g+
+		norm! zz
 		redraw!
-        norm g+
         exe "sleep " .s:replay_speed . 'm'
 		let t=changenr()
     endw
@@ -135,11 +137,23 @@ fun! Replay#TagStopState(tag) "{{{1
         call <sid>WarningMsg("Tag " . tag . " not found!")
         return
     else
+		let change=changenr()
 		if tag == 'Default'
 			let b:replay_data[tag] = {}
 		endif
-        let b:replay_data[tag].stop = changenr()
-        let b:replay_data[tag].stop_time = strftime('%c')
+		" If stop is before start, swap both changes
+		if !exists("b:replay_data[tag].start")
+			let b:replay_data[tag].start = 0
+			let b:replay_data[tag].stop = change
+			let b:replay_data[tag].stop_time = strftime('%c')
+		elseif b:replay_data[tag].start > change
+			let b:replay_data[tag].stop = b:replay_data[tag].start
+			let b:replay_data[tag].start = change
+			let b:replay_data[tag].stop_time = strftime('%c')
+		else
+			let b:replay_data[tag].stop = change
+			let b:replay_data[tag].stop_time = strftime('%c')
+		endif
     endif
 endfun
 
@@ -158,9 +172,9 @@ fun! Replay#ListStates() "{{{1
 	endif
     echo printf("%.*s\t%s\t\t\t%s\n",len+1,"Tag", "Starttime", "Stoptime")
     echohl Normal
-	echo printf("%s\n", '======================================================================')
+	echo printf("%s", '======================================================================')
     for key in keys(b:replay_data)
-        echo printf("%.*s\t%s\t%s\n", len, key, (exists("b:replay_data[key].start_time") ? b:replay_data[key].start_time : repeat('-',28)),
+        echo printf("%.*s\t%s\t%s", len, key, (exists("b:replay_data[key].start_time") ? b:replay_data[key].start_time : repeat('-',28)),
 					\(exists("b:replay_data[key].stop_time") ? b:replay_data[key].stop_time : repeat('-',28)))
     endfor
 endfun
@@ -172,15 +186,15 @@ endfun
 " Modeline "{{{1
 " vim: ts=4 sts=4 fdm=marker com+=l\:\" fdl=0
 doc/Replay.txt	[[[1
-91
+96
 *Replay.txt*   A plugin to record and replay your editing sessions
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.1 Mon, 23 Aug 2010 21:11:40 +0200
+Version: 0.2 Tue, 24 Aug 2010 13:57:34 +0200
 
 Copyright: (c) 2009, 2010 by Christian Brabandt
-           The VIM LICENSE applies to NrrwRgnPlugin.vim and NrrwRgnPlugin.txt
-           (see |copyright|) except use NrrwRgnPlugin instead of "Vim".
+           The VIM LICENSE applies to Replay.vim (see |copyright|)
+           except use Replay.vim instead of "Vim".
            NO WARRANTY, EXPRESS OR IMPLIED.  USE AT-YOUR-OWN-RISK.
 
 
@@ -231,20 +245,20 @@ to a buffer.
 2.1 Replay Configuration                                    *Replay-config*
 
 You can configure the speed, with which to replay the changes, that have been
-done. By default, Replay.vim pauses for 100ms after every change. If you want
+done. By default, Replay.vim pauses for 200ms after every change. If you want
 to change this, set the variable g:replay_speed to a value in milliseconds in
 your |.vimrc| >
 
-    let g:replay_speed = 200
+    let g:replay_speed = 300
 <
-will replay your editing session with slower and pauses for 200ms after every
+will replay your editing session with slower and pauses for 300ms after every
 change.
 ==============================================================================
 3. Replay Feedback                                         *Replay-feedback*
 
 Feedback is always welcome. If you like the plugin, please rate it at the
 vim-page:
-http://www.vim.org/scripts/script.php?script_id=
+http://www.vim.org/scripts/script.php?script_id=3216
 
 You can also follow the development of the plugin at github:
 http://github.com/chrisbra/Replay
@@ -254,6 +268,11 @@ third line of this document.
 
 ==============================================================================
 4. Replay History                                          *Replay-history*
+
+0.2: Aug 24, 2010
+- Enabled |GLVS|
+- small bugfixes
+- changed default playback rate to 200ms
 
 0.1: Aug 23, 2010       
 

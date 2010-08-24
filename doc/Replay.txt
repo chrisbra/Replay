@@ -1,7 +1,7 @@
 *Replay.txt*   A plugin to record and replay your editing sessions
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.1 Mon, 23 Aug 2010 21:11:40 +0200
+Version: 0.2 Tue, 24 Aug 2010 13:57:34 +0200
 
 Copyright: (c) 2009, 2010 by Christian Brabandt
            The VIM LICENSE applies to Replay.vim (see |copyright|)
