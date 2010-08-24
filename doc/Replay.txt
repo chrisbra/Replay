@@ -4,8 +4,8 @@ Author:  Christian Brabandt <cb@256bit.org>
 Version: 0.1 Mon, 23 Aug 2010 21:11:40 +0200
 
 Copyright: (c) 2009, 2010 by Christian Brabandt
-           The VIM LICENSE applies to NrrwRgnPlugin.vim and NrrwRgnPlugin.txt
-           (see |copyright|) except use NrrwRgnPlugin instead of "Vim".
+           The VIM LICENSE applies to Replay.vim (see |copyright|)
+           except use Replay.vim instead of "Vim".
            NO WARRANTY, EXPRESS OR IMPLIED.  USE AT-YOUR-OWN-RISK.
 
 
@@ -56,20 +56,20 @@ to a buffer.
 2.1 Replay Configuration                                    *Replay-config*
 
 You can configure the speed, with which to replay the changes, that have been
-done. By default, Replay.vim pauses for 100ms after every change. If you want
+done. By default, Replay.vim pauses for 200ms after every change. If you want
 to change this, set the variable g:replay_speed to a value in milliseconds in
 your |.vimrc| >
 
-    let g:replay_speed = 200
+    let g:replay_speed = 300
 <
-will replay your editing session with slower and pauses for 200ms after every
+will replay your editing session with slower and pauses for 300ms after every
 change.
 ==============================================================================
 3. Replay Feedback                                         *Replay-feedback*
 
 Feedback is always welcome. If you like the plugin, please rate it at the
 vim-page:
-http://www.vim.org/scripts/script.php?script_id=
+http://www.vim.org/scripts/script.php?script_id=3216
 
 You can also follow the development of the plugin at github:
 http://github.com/chrisbra/Replay
@@ -83,6 +83,7 @@ third line of this document.
 0.2: Aug 24, 2010
 - Enabled |GLVS|
 - small bugfixes
+- changed default playback rate to 200ms
 
 0.1: Aug 23, 2010       
 
