@@ -11,7 +11,7 @@
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: XXX 2 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 2 :AutoInstall: Replay.vim
 "
 " Init:
 if exists("g:loaded_replay") || &cp || &ul == -1

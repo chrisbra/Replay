@@ -11,7 +11,7 @@
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: XXX 2 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 2 :AutoInstall: Replay.vim
 "
 fun! <sid>WarningMsg(msg)"{{{1
         echohl WarningMsg
@@ -32,7 +32,7 @@ fun! <sid>Init() "{{{1
 		let b:replay_data.Default.start=0
     endif
     " Customization
-    let s:replay_speed  = (exists("g:replay_speed")   ? g:replay_speed    : 100)
+    let s:replay_speed  = (exists("g:replay_speed")   ? g:replay_speed    : 200)
 endfun 
 
 fun! Replay#Replay(tag) "{{{1
@@ -49,9 +49,10 @@ fun! Replay#Replay(tag) "{{{1
 	let curpos=winsaveview()
     let undo_change=get(b:replay_data, tag)
     let stop_change=<sid>LastChange()
+
     if undo_change.start==0
         undo 1
-        g-
+        norm! g-
     else
         if exists("undo_change.stop")
             let stop_change=undo_change.stop
@@ -60,8 +61,9 @@ fun! Replay#Replay(tag) "{{{1
     endif
     let t=changenr()
     while t < stop_change
+        silent norm! g+
+		norm! zz
 		redraw!
-        norm g+
         exe "sleep " .s:replay_speed . 'm'
 		let t=changenr()
     endw
@@ -94,11 +96,23 @@ fun! Replay#TagStopState(tag) "{{{1
         call <sid>WarningMsg("Tag " . tag . " not found!")
         return
     else
+		let change=changenr()
 		if tag == 'Default'
 			let b:replay_data[tag] = {}
 		endif
-        let b:replay_data[tag].stop = changenr()
-        let b:replay_data[tag].stop_time = strftime('%c')
+		" If stop is before start, swap both changes
+		if !exists("b:replay_data[tag].start")
+			let b:replay_data[tag].start = 0
+			let b:replay_data[tag].stop = change
+			let b:replay_data[tag].stop_time = strftime('%c')
+		elseif b:replay_data[tag].start > change
+			let b:replay_data[tag].stop = b:replay_data[tag].start
+			let b:replay_data[tag].start = change
+			let b:replay_data[tag].stop_time = strftime('%c')
+		else
+			let b:replay_data[tag].stop = change
+			let b:replay_data[tag].stop_time = strftime('%c')
+		endif
     endif
 endfun
 
@@ -117,9 +131,9 @@ fun! Replay#ListStates() "{{{1
 	endif
     echo printf("%.*s\t%s\t\t\t%s\n",len+1,"Tag", "Starttime", "Stoptime")
     echohl Normal
-	echo printf("%s\n", '======================================================================')
+	echo printf("%s", '======================================================================')
     for key in keys(b:replay_data)
-        echo printf("%.*s\t%s\t%s\n", len, key, (exists("b:replay_data[key].start_time") ? b:replay_data[key].start_time : repeat('-',28)),
+        echo printf("%.*s\t%s\t%s", len, key, (exists("b:replay_data[key].start_time") ? b:replay_data[key].start_time : repeat('-',28)),
 					\(exists("b:replay_data[key].stop_time") ? b:replay_data[key].stop_time : repeat('-',28)))
     endfor
 endfun

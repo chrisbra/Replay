@@ -4,7 +4,8 @@ use warnings;
 
 use WWW::Mechanize;
 
-my $sid=shift @ARGV;
+#my $sid=shift @ARGV;
+my $sid=3216;
 my $file=shift @ARGV;
 my $scriptversion=shift @ARGV;
 my $versioncomment=shift @ARGV;

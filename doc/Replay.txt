@@ -80,6 +80,10 @@ third line of this document.
 ==============================================================================
 4. Replay History                                          *Replay-history*
 
+0.2: Aug 24, 2010
+- Enabled |GLVS|
+- small bugfixes
+
 0.1: Aug 23, 2010       
 
 - Initial upload
