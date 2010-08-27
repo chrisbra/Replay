@@ -3,6 +3,7 @@ AUTOL =$(wildcard autoload/*.vim)
 DOC=$(wildcard doc/*.txt)
 PLUGIN=$(shell basename "$$PWD")
 VERSION=$(shell sed -n '/Version:/{s/^.*\(\S\.\S\+\)$$/\1/;p}' $(SCRIPT))
+COMMENT=$(shell sed -n "/^$(VERSION)/,/^$$/{/$(VERSION)/b;/^$$/b;p}" ${DOC})
 
 .PHONY: $(PLUGIN).vba README
 
@@ -41,3 +42,6 @@ version:
 	perl -i -pne 'if (/Last Change:/) {s/(:\s+).*\n/sprintf(": %s", `date -R`)/e}' ${SCRIPT} ${AUTOL}
 	perl -i.orig -pne 'if (/Version:/) {s/\.(\d+).*\n/sprintf(".%d %s", 1+$$1, `date -R`)/e}' ${DOC}
 	VERSION=$(shell sed -n '/Version:/{s/^.*\(\S\.\S\+\)$$/\1/;p}' $(SCRIPT))
+
+upload:
+	perl post.pl "$(PLUGIN)-$(VERSION).vba" "$(VERSION)" "$(COMMENT)"
