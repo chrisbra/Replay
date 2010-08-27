@@ -1,8 +1,8 @@
 " Replay.vim - Replay your editing Session
 " -------------------------------------------------------------
-" Version: 0.2
+" Version: 0.3
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Tue, 24 Aug 2010 13:57:34 +0200
+" Last Change: Fri, 27 Aug 2010 14:18:31 +0200
 "
 " Script: http://www.vim.org/scripts/script.php?script_id=
 " Copyright:   (c) 2009, 2010 by Christian Brabandt
@@ -11,7 +11,7 @@
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: 3216 3 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 4 :AutoInstall: Replay.vim
 "
 " Init:
 if exists("g:loaded_replay") || &cp || &ul == -1
@@ -24,7 +24,7 @@ set cpo&vim
 
 " User_Command:
 com! -bang -nargs=? -complete=custom,Replay#CompleteTags StartRecord :call Replay#TagState(<q-args>, !empty("<bang>"))
-com! -complete=custom,Replay#CompleteTags -nargs=1 StopRecord :call Replay#TagStopState(<q-args>)
+com! -complete=custom,Replay#CompleteTags -nargs=? StopRecord :call Replay#TagStopState(<q-args>)
 com! -nargs=? -complete=custom,Replay#CompleteTags Replay :call Replay#Replay(<q-args>)
 com! ListRecords :call Replay#ListStates()
 

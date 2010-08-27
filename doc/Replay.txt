@@ -1,7 +1,7 @@
 *Replay.txt*   A plugin to record and replay your editing sessions
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.2 Tue, 24 Aug 2010 13:57:34 +0200
+Version: 0.3 Fri, 27 Aug 2010 14:18:31 +0200
 
 Copyright: (c) 2009, 2010 by Christian Brabandt
            The VIM LICENSE applies to Replay.vim (see |copyright|)
@@ -37,13 +37,12 @@ to a buffer.
                             names
 
                                                             *:StopRecord*
-:StopRecord[!] Tag          Recording Session for the Tag will stop at this
+:StopRecord[!] [Tag]        Recording Session for the Tag will stop at this
                             change.
+                            If you don't enter a Tag name, the last started
+                            recording session will stop.
                             You can use <Tab> to complete the available Tag
                             names
-
-                                                            *:ListRecords*
-:ListRecords                Show which tags are available.
 
                                                                     *:Replay*
 :Replay [Tag]               Start Replaying your Session, that is identified
@@ -51,6 +50,22 @@ to a buffer.
                             default tag "Default"
                             You can use <Tab> to complete the available Tag
                             names
+
+                                                            *:ListRecords*
+:ListRecords                Show which tags are available. This presents a
+                            little table that looks like this:
+
+    Tag Starttime               Start           Stoptime        Stop~
+=====================================================================
+   abcd 27.08.2010 14:12:01     164     27.08.2010 14:12:11     168
+Default 27.08.2010 14:09:26     0       -------------------
+
+That means one Recording called "abcd" was started in the undo-tree with the
+change number 164. (You can jump back to that change using :undo 164, see also
+|:undo|.) Recording time for that tag started on August, 27, 2010 at 14:12:01
+o'clock and recording will stop at change number 168 which was at 14:12:11
+o'clock. Please bear in mind, that the starting time for the Default-Tag can't
+exactly be given, but is the first time, any of the above commands was called.
 
 ==============================================================================
 2.1 Replay Configuration                                    *Replay-config*
@@ -79,6 +94,14 @@ third line of this document.
 
 ==============================================================================
 4. Replay History                                          *Replay-history*
+
+0.3: Aug 27, 2010
+- Automatically stopp Recording for latest started Recording session
+  (suggested by Salim Halim, thanks!)
+- Changed recording of time to use localtime() instead of storing a string
+- Better documentation for :ListRecordings
+- ListRecordings now also displays the change number (so you can easily jump
+  to a change using :undo)
 
 0.2: Aug 24, 2010
 - Enabled |GLVS|

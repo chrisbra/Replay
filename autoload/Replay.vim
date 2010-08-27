@@ -1,8 +1,8 @@
 " Replay.vim - Replay your editing Session
 " -------------------------------------------------------------
-" Version: 0.2
+" Version: 0.3
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Tue, 24 Aug 2010 13:57:34 +0200
+" Last Change: Fri, 27 Aug 2010 14:18:31 +0200
 "
 " Script: http://www.vim.org/scripts/script.php?script_id=
 " Copyright:   (c) 2009, 2010 by Christian Brabandt
@@ -11,7 +11,7 @@
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: 3216 3 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 4 :AutoInstall: Replay.vim
 "
 fun! <sid>WarningMsg(msg)"{{{1
         echohl WarningMsg
@@ -30,6 +30,7 @@ fun! <sid>Init() "{{{1
         let b:replay_data={}
 		let b:replay_data.Default={}
 		let b:replay_data.Default.start=0
+		let b:replay_data.Default.start_time=localtime()
     endif
     " Customization
     let s:replay_speed  = (exists("g:replay_speed")   ? g:replay_speed    : 200)
@@ -85,13 +86,14 @@ fun! Replay#TagState(tag, bang) "{{{1
     else
 		let b:replay_data[tag] = {}
         let b:replay_data[tag].start = changenr()
-        let b:replay_data[tag].start_time = strftime('%c')
+        let b:replay_data[tag].start_time = localtime()
     endif
 endfun
 
 fun! Replay#TagStopState(tag) "{{{1
 	call <sid>Init()
-    let tag=(empty(a:tag) ? 'Default' : a:tag)
+    "let tag=(empty(a:tag) ? 'Default' : a:tag)
+	let tag=(empty(a:tag) ? <sid>LastStartedRecording() : a:tag)
     if !exists("b:replay_data.".tag) "&& tag != 'Default'
         call <sid>WarningMsg("Tag " . tag . " not found!")
         return
@@ -104,16 +106,17 @@ fun! Replay#TagStopState(tag) "{{{1
 		if !exists("b:replay_data[tag].start")
 			let b:replay_data[tag].start = 0
 			let b:replay_data[tag].stop = change
-			let b:replay_data[tag].stop_time = strftime('%c')
+			let b:replay_data[tag].stop_time = localtime()
 		elseif b:replay_data[tag].start > change
 			let b:replay_data[tag].stop = b:replay_data[tag].start
 			let b:replay_data[tag].start = change
-			let b:replay_data[tag].stop_time = strftime('%c')
+			let b:replay_data[tag].stop_time = localtime()
 		else
 			let b:replay_data[tag].stop = change
-			let b:replay_data[tag].stop_time = strftime('%c')
+			let b:replay_data[tag].stop_time = localtime()
 		endif
     endif
+	call <sid>WarningMsg("Stopped Recording of: " . tag . " tag")
 endfun
 
 fun! <sid>MaxTagLength() "{{{1
@@ -129,18 +132,35 @@ fun! Replay#ListStates() "{{{1
 	if len==0
 		let len=3
 	endif
-    echo printf("%.*s\t%s\t\t\t%s\n",len+1,"Tag", "Starttime", "Stoptime")
+    echo printf("%*.*s\t%s\t\t%s\t\t%s\t%s\n",len,len,"Tag", "Starttime", "Start", "Stoptime", "Stop")
     echohl Normal
-	echo printf("%s", '======================================================================')
+	echo printf("%s", '===================================================================================')
     for key in keys(b:replay_data)
-        echo printf("%.*s\t%s\t%s", len, key, (exists("b:replay_data[key].start_time") ? b:replay_data[key].start_time : repeat('-',28)),
-					\(exists("b:replay_data[key].stop_time") ? b:replay_data[key].stop_time : repeat('-',28)))
+        echo printf("%*.*s\t%s\t%s\t%s\t%s", len,len, key,
+					\(exists("b:replay_data[key].start_time") ? strftime("%d.%m.%Y %H:%M:%S", b:replay_data[key].start_time) : repeat('-',19)),
+					\(exists("b:replay_data[key].start")      ? b:replay_data[key].start                                     : ' '),
+					\(exists("b:replay_data[key].stop_time")  ? strftime("%d.%m.%Y %H:%M:%S", b:replay_data[key].stop_time)  : repeat('-',19)),
+					\(exists("b:replay_data[key].stop")       ? b:replay_data[key].stop                                      : ' '))
     endfor
 endfun
 
 fun! Replay#CompleteTags(A,L,P) "{{{1
 	 cal <sid>Init()
 	 return join(sort(keys(b:replay_data)),"\n")
+endfun
+
+fun! <sid>LastStartedRecording() "{{{1
+	let a=copy(b:replay_data)
+	call filter(a, '!exists("v:val.stop")')
+	let key=''
+	let time=0
+	for item in keys(a)
+		if a[item].start_time > time
+		   let time=a[item].start_time
+		   let key = item
+		endif
+	endfor
+	return key
 endfun
 " Modeline "{{{1
 " vim: ts=4 sts=4 fdm=marker com+=l\:\" fdl=0

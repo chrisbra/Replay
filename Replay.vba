@@ -5,9 +5,9 @@ plugin/ReplayPlugin.vim	[[[1
 34
 " Replay.vim - Replay your editing Session
 " -------------------------------------------------------------
-" Version: 0.2
+" Version: 0.3
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Tue, 24 Aug 2010 13:57:34 +0200
+" Last Change: Fri, 27 Aug 2010 14:18:31 +0200
 "
 " Script: http://www.vim.org/scripts/script.php?script_id=
 " Copyright:   (c) 2009, 2010 by Christian Brabandt
@@ -16,7 +16,7 @@ plugin/ReplayPlugin.vim	[[[1
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: 3216 3 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 4 :AutoInstall: Replay.vim
 "
 " Init:
 if exists("g:loaded_replay") || &cp || &ul == -1
@@ -29,7 +29,7 @@ set cpo&vim
 
 " User_Command:
 com! -bang -nargs=? -complete=custom,Replay#CompleteTags StartRecord :call Replay#TagState(<q-args>, !empty("<bang>"))
-com! -complete=custom,Replay#CompleteTags -nargs=1 StopRecord :call Replay#TagStopState(<q-args>)
+com! -complete=custom,Replay#CompleteTags -nargs=? StopRecord :call Replay#TagStopState(<q-args>)
 com! -nargs=? -complete=custom,Replay#CompleteTags Replay :call Replay#Replay(<q-args>)
 com! ListRecords :call Replay#ListStates()
 
@@ -38,12 +38,12 @@ let &cpo=s:cpo
 unlet s:cpo
 " vim: ts=4 sts=4 fdm=marker com+=l\:\" fdm=syntax
 autoload/Replay.vim	[[[1
-146
+166
 " Replay.vim - Replay your editing Session
 " -------------------------------------------------------------
-" Version: 0.2
+" Version: 0.3
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Tue, 24 Aug 2010 13:57:34 +0200
+" Last Change: Fri, 27 Aug 2010 14:18:31 +0200
 "
 " Script: http://www.vim.org/scripts/script.php?script_id=
 " Copyright:   (c) 2009, 2010 by Christian Brabandt
@@ -52,7 +52,7 @@ autoload/Replay.vim	[[[1
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: 3216 3 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 4 :AutoInstall: Replay.vim
 "
 fun! <sid>WarningMsg(msg)"{{{1
         echohl WarningMsg
@@ -71,6 +71,7 @@ fun! <sid>Init() "{{{1
         let b:replay_data={}
 		let b:replay_data.Default={}
 		let b:replay_data.Default.start=0
+		let b:replay_data.Default.start_time=localtime()
     endif
     " Customization
     let s:replay_speed  = (exists("g:replay_speed")   ? g:replay_speed    : 200)
@@ -126,13 +127,14 @@ fun! Replay#TagState(tag, bang) "{{{1
     else
 		let b:replay_data[tag] = {}
         let b:replay_data[tag].start = changenr()
-        let b:replay_data[tag].start_time = strftime('%c')
+        let b:replay_data[tag].start_time = localtime()
     endif
 endfun
 
 fun! Replay#TagStopState(tag) "{{{1
 	call <sid>Init()
-    let tag=(empty(a:tag) ? 'Default' : a:tag)
+    "let tag=(empty(a:tag) ? 'Default' : a:tag)
+	let tag=(empty(a:tag) ? <sid>LastStartedRecording() : a:tag)
     if !exists("b:replay_data.".tag) "&& tag != 'Default'
         call <sid>WarningMsg("Tag " . tag . " not found!")
         return
@@ -145,16 +147,17 @@ fun! Replay#TagStopState(tag) "{{{1
 		if !exists("b:replay_data[tag].start")
 			let b:replay_data[tag].start = 0
 			let b:replay_data[tag].stop = change
-			let b:replay_data[tag].stop_time = strftime('%c')
+			let b:replay_data[tag].stop_time = localtime()
 		elseif b:replay_data[tag].start > change
 			let b:replay_data[tag].stop = b:replay_data[tag].start
 			let b:replay_data[tag].start = change
-			let b:replay_data[tag].stop_time = strftime('%c')
+			let b:replay_data[tag].stop_time = localtime()
 		else
 			let b:replay_data[tag].stop = change
-			let b:replay_data[tag].stop_time = strftime('%c')
+			let b:replay_data[tag].stop_time = localtime()
 		endif
     endif
+	call <sid>WarningMsg("Stopped Recording of: " . tag . " tag")
 endfun
 
 fun! <sid>MaxTagLength() "{{{1
@@ -170,12 +173,15 @@ fun! Replay#ListStates() "{{{1
 	if len==0
 		let len=3
 	endif
-    echo printf("%.*s\t%s\t\t\t%s\n",len+1,"Tag", "Starttime", "Stoptime")
+    echo printf("%*.*s\t%s\t\t%s\t\t%s\t%s\n",len,len,"Tag", "Starttime", "Start", "Stoptime", "Stop")
     echohl Normal
-	echo printf("%s", '======================================================================')
+	echo printf("%s", '===================================================================================')
     for key in keys(b:replay_data)
-        echo printf("%.*s\t%s\t%s", len, key, (exists("b:replay_data[key].start_time") ? b:replay_data[key].start_time : repeat('-',28)),
-					\(exists("b:replay_data[key].stop_time") ? b:replay_data[key].stop_time : repeat('-',28)))
+        echo printf("%*.*s\t%s\t%s\t%s\t%s", len,len, key,
+					\(exists("b:replay_data[key].start_time") ? strftime("%d.%m.%Y %H:%M:%S", b:replay_data[key].start_time) : repeat('-',19)),
+					\(exists("b:replay_data[key].start")      ? b:replay_data[key].start                                     : ' '),
+					\(exists("b:replay_data[key].stop_time")  ? strftime("%d.%m.%Y %H:%M:%S", b:replay_data[key].stop_time)  : repeat('-',19)),
+					\(exists("b:replay_data[key].stop")       ? b:replay_data[key].stop                                      : ' '))
     endfor
 endfun
 
@@ -183,14 +189,28 @@ fun! Replay#CompleteTags(A,L,P) "{{{1
 	 cal <sid>Init()
 	 return join(sort(keys(b:replay_data)),"\n")
 endfun
+
+fun! <sid>LastStartedRecording() "{{{1
+	let a=copy(b:replay_data)
+	call filter(a, '!exists("v:val.stop")')
+	let key=''
+	let time=0
+	for item in keys(a)
+		if a[item].start_time > time
+		   let time=a[item].start_time
+		   let key = item
+		endif
+	endfor
+	return key
+endfun
 " Modeline "{{{1
 " vim: ts=4 sts=4 fdm=marker com+=l\:\" fdl=0
 doc/Replay.txt	[[[1
-96
+119
 *Replay.txt*   A plugin to record and replay your editing sessions
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.2 Tue, 24 Aug 2010 13:57:34 +0200
+Version: 0.3 Fri, 27 Aug 2010 14:18:31 +0200
 
 Copyright: (c) 2009, 2010 by Christian Brabandt
            The VIM LICENSE applies to Replay.vim (see |copyright|)
@@ -226,13 +246,12 @@ to a buffer.
                             names
 
                                                             *:StopRecord*
-:StopRecord[!] Tag          Recording Session for the Tag will stop at this
+:StopRecord[!] [Tag]        Recording Session for the Tag will stop at this
                             change.
+                            If you don't enter a Tag name, the last started
+                            recording session will stop.
                             You can use <Tab> to complete the available Tag
                             names
-
-                                                            *:ListRecords*
-:ListRecords                Show which tags are available.
 
                                                                     *:Replay*
 :Replay [Tag]               Start Replaying your Session, that is identified
@@ -240,6 +259,22 @@ to a buffer.
                             default tag "Default"
                             You can use <Tab> to complete the available Tag
                             names
+
+                                                            *:ListRecords*
+:ListRecords                Show which tags are available. This presents a
+                            little table that looks like this:
+
+    Tag Starttime               Start           Stoptime        Stop~
+=====================================================================
+   abcd 27.08.2010 14:12:01     164     27.08.2010 14:12:11     168
+Default 27.08.2010 14:09:26     0       -------------------
+
+That means one Recording called "abcd" was started in the undo-tree with the
+change number 164. (You can jump back to that change using :undo 164, see also
+|:undo|.) Recording time for that tag started on August, 27, 2010 at 14:12:01
+o'clock and recording will stop at change number 168 which was at 14:12:11
+o'clock. Please bear in mind, that the starting time for the Default-Tag can't
+exactly be given, but is the first time, any of the above commands was called.
 
 ==============================================================================
 2.1 Replay Configuration                                    *Replay-config*
@@ -268,6 +303,14 @@ third line of this document.
 
 ==============================================================================
 4. Replay History                                          *Replay-history*
+
+0.3: Aug 27, 2010
+- Automatically stopp Recording for latest started Recording session
+  (suggested by Salim Halim, thanks!)
+- Changed recording of time to use localtime() instead of storing a string
+- Better documentation for :ListRecordings
+- ListRecordings now also displays the change number (so you can easily jump
+  to a change using :undo)
 
 0.2: Aug 24, 2010
 - Enabled |GLVS|
