@@ -121,6 +121,9 @@ third line of this document.
 
 - disable folding
 - enable to screenrecord the replay using ffmpeg/avconv
+  (fixes https://github.com/chrisbra/Replay/issues/1,
+  suggested by David Jacobs, thanks!)
+
 
 0.3: Aug 27, 2010 {{{1
 

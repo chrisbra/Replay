@@ -1,19 +1,20 @@
 " Replay.vim - Replay your editing Session
 " -------------------------------------------------------------
-" Version: 0.3
+" Version: 0.4
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Fri, 27 Aug 2010 14:18:31 +0200
+" Last Change: Wed, 27 Feb 2013 21:49:54 +0100
 "
-" Script: http://www.vim.org/scripts/script.php?script_id=
-" Copyright:   (c) 2009, 2010 by Christian Brabandt
+" Script: http://www.vim.org/scripts/script.php?script_id=3216
+" Copyright:   (c) 2009, 2010, 2011, 2012, 2013  by Christian Brabandt
 "              The VIM LICENSE applies to NrrwRgn.vim 
 "              (see |copyright|) except use "Replay.vim" 
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: 3216 4 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 5 :AutoInstall: Replay.vim
 "
-fun! <sid>WarningMsg(msg)"{{{1
+let s:dir=fnamemodify(expand("<sfile>"), ':p:h')
+fun! <sid>WarningMsg(msg) "{{{1
         echohl WarningMsg
         let msg = "ReplayPlugin: " . a:msg
         if exists(":unsilent") == 2
@@ -34,9 +35,18 @@ fun! <sid>Init() "{{{1
     endif
     " Customization
     let s:replay_speed  = (exists("g:replay_speed")   ? g:replay_speed    : 200)
+	let s:replay_save   = (exists("g:replay_record")  ? g:replay_record   : '')
+	if !empty(s:replay_save) &&
+		\ !(executable("ffmpeg") || executable("avconv")) &&
+		\ !empty(expand("$DISPLAY"))
+		" ffmpeg/avconv not available in $PATH or not running on X11 server
+		let s:replay_save = ''
+	endif
 endfun 
 
 fun! Replay#Replay(tag) "{{{1
+	let _fen = &fen
+	setl nofen " disable folding, so the changes can be better viewed.
     call <sid>Init()
 	if empty(a:tag)
 		let tag='Default'
@@ -61,6 +71,36 @@ fun! Replay#Replay(tag) "{{{1
         exe "undo " undo_change.start
     endif
     let t=changenr()
+	let pid = 0
+	if !empty(s:replay_save)   &&
+	  \ exists("v:windowid")   &&
+	  \ executable("xwininfo") &&
+      \ <sid>Is('unix')
+
+		let geom = {}
+
+		" get window coordinates
+		let msg  = system("LC_ALL=C xwininfo -id ". v:windowid.
+					\ '|grep "Absolute\|Width\|Height"')
+		let geom["x"]      = matchstr(msg, '\s*Absolute upper-left X:\s\+\zs\d\+\ze\s*\n') + 0
+		let geom["y"]      = matchstr(msg, '\s*Absolute upper-left Y:\s\+\zs\d\+\ze\s*\n') + 0
+		let geom["width"]  = matchstr(msg, '\s*Width:\s\+\zs\d\+\ze\s*\n') + 0
+		let geom["height"] = matchstr(msg, '\s*Height:\s\+\zs\d\+\ze\s*\n') + 0
+
+		" record screen
+		let cmd = printf('%s -f x11grab -s hd720 -show_region 1 -framerate 10'.
+					\ ' -i %s -vf crop=%d:%d:%d:%d %s/Replay_%d.mkv',
+					\ s:replay_save,
+					\ (strlen($DISPLAY) == 2 ? $DISPLAY.'.0' : $DISPLAY),
+					\ geom.width, geom.height, geom.x, geom.y,
+					\ (filewritable(getcwd()) == 2 ? getcwd() : '$HOME'),
+					\ strftime('%Y%m%d', localtime())
+					\ )
+		let cmd = 'sh '. s:dir. '/screencapture.sh '. cmd
+		let pid=system(cmd)
+		" sleep shortly
+        exe "sleep " .s:replay_speed . 'm'
+	endif
     while t < stop_change
         silent norm! g+
 		norm! zz
@@ -68,6 +108,10 @@ fun! Replay#Replay(tag) "{{{1
         exe "sleep " .s:replay_speed . 'm'
 		let t=changenr()
     endw
+    if pid && <sid>Is('unix')
+		call system('kill '. pid)
+	endif
+	let &l:fen = _fen
 	call winrestview(curpos)
 endfun
 
@@ -162,5 +206,15 @@ fun! <sid>LastStartedRecording() "{{{1
 	endfor
 	return key
 endfun
+
+fun! <sid>Is(os) "{{{1
+    if (a:os == "win")
+        return has("win32") || has("win16") || has("win64")
+    elseif (a:os == "mac")
+        return has("mac") || has("macunix")
+    elseif (a:os == "unix")
+        return has("unix") || has("macunix")
+    endif
+endfu
 " Modeline "{{{1
 " vim: ts=4 sts=4 fdm=marker com+=l\:\" fdl=0

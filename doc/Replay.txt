@@ -1,9 +1,9 @@
 *Replay.txt*   A plugin to record and replay your editing sessions
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.3 Fri, 27 Aug 2010 14:18:31 +0200
+Version: 0.4 Wed, 27 Feb 2013 21:49:54 +0100
 
-Copyright: (c) 2009, 2010 by Christian Brabandt
+Copyright: (c) 2009, 2010, 2011, 2012, 2013 by Christian Brabandt
            The VIM LICENSE applies to Replay.vim (see |copyright|)
            except use Replay.vim instead of "Vim".
            NO WARRANTY, EXPRESS OR IMPLIED.  USE AT-YOUR-OWN-RISK.
@@ -14,9 +14,11 @@ Copyright: (c) 2009, 2010 by Christian Brabandt
 
         1.  Contents.....................................: |ReplayPlugin|
         2.  Replay Manual................................: |Replay-manual|
-        2.1   Replay Configuration.......................: |Replay-config|
-        3.  Replay Feedback..............................: |Replay-feedback|
-        4.  Replay History...............................: |Replay-history|
+        3.  Replay Configuration.........................: |Replay-config|
+        3.1   Replay Speed...............................: |Replay-speed|
+        3.2   Replay Recording...........................: |Replay-record|
+        4.  Replay Feedback..............................: |Replay-feedback|
+        5.  Replay History...............................: |Replay-history|
 
 ==============================================================================
 2. Replay Manual                                            *Replay-manual*
@@ -68,7 +70,9 @@ o'clock. Please bear in mind, that the starting time for the Default-Tag can't
 exactly be given, but is the first time, any of the above commands was called.
 
 ==============================================================================
-2.1 Replay Configuration                                    *Replay-config*
+3 Replay Configuration                                       *Replay-config*
+
+3.1 Replay Speed                                              *Replay-speed*
 
 You can configure the speed, with which to replay the changes, that have been
 done. By default, Replay.vim pauses for 200ms after every change. If you want
@@ -79,8 +83,26 @@ your |.vimrc| >
 <
 will replay your editing session with slower and pauses for 300ms after every
 change.
+
+3.2 Replay Recording                                        *Replay-record*
+
+It is possible to record the replay using avconv/ffmeg. For this to work, you
+need ffmpeg/avconv installed and vim needs to be run on an X11-Server. To
+enable this, set the variable g:replay_record to either ffmpeg or avconv
+(whichever of the two tools you want to use for screen capturing) in your
+|.vimrc| like this: >
+
+    let g:replay_record = 'avconv'
+<
+When the replay is started, it will be recorded using ffmpeg/avconv for 
+screencapturing and the result will be saved as Replay_YYYYMMDD.mkv in either
+the current working directory (|:pwd|) if it is writable or your $HOME
+directory.
+
+(Note, this currently works only on Unix/Linux).
+
 ==============================================================================
-3. Replay Feedback                                         *Replay-feedback*
+4. Replay Feedback                                         *Replay-feedback*
 
 Feedback is always welcome. If you like the plugin, please rate it at the
 vim-page:
@@ -93,9 +115,18 @@ Please don't hesitate to report any bugs to the maintainer, mentioned in the
 third line of this document.
 
 ==============================================================================
-4. Replay History                                          *Replay-history*
+5. Replay History                                          *Replay-history*
 
-0.3: Aug 27, 2010
+0.4: Feb 27, 2013 {{{1
+
+- disable folding
+- enable to screenrecord the replay using ffmpeg/avconv
+  (fixes https://github.com/chrisbra/Replay/issues/1,
+  suggested by David Jacobs, thanks!)
+
+
+0.3: Aug 27, 2010 {{{1
+
 - Automatically stopp Recording for latest started Recording session
   (suggested by Salim Halim, thanks!)
 - Changed recording of time to use localtime() instead of storing a string
@@ -103,17 +134,19 @@ third line of this document.
 - ListRecordings now also displays the change number (so you can easily jump
   to a change using :undo)
 
-0.2: Aug 24, 2010
+0.2: Aug 24, 2010  {{{1
+
 - Enabled |GLVS|
 - small bugfixes
 - changed default playback rate to 200ms
 
-0.1: Aug 23, 2010       
+0.1: Aug 23, 2010 {{{1
 
 - Initial upload
 - development versions are available at the github repository
 - put plugin on a public repository (http://github.com/chrisbra/NrrwRgn)
 
+  }}}
 ==============================================================================
-Modeline:
-vim:tw=78:ts=8:ft=help:et
+Modeline: {{{1
+vim:tw=78:ts=8:ft=help:et:fdm=marker:fdl=0:norl

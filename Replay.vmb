@@ -260,7 +260,7 @@ endfu
 " Modeline "{{{1
 " vim: ts=4 sts=4 fdm=marker com+=l\:\" fdl=0
 doc/Replay.txt	[[[1
-149
+152
 *Replay.txt*   A plugin to record and replay your editing sessions
 
 Author:  Christian Brabandt <cb@256bit.org>
@@ -384,6 +384,9 @@ third line of this document.
 
 - disable folding
 - enable to screenrecord the replay using ffmpeg/avconv
+  (fixes https://github.com/chrisbra/Replay/issues/1,
+  suggested by David Jacobs, thanks!)
+
 
 0.3: Aug 27, 2010 {{{1
 

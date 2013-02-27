@@ -1,17 +1,17 @@
 " Replay.vim - Replay your editing Session
 " -------------------------------------------------------------
-" Version: 0.3
+" Version: 0.4
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Fri, 27 Aug 2010 14:18:31 +0200
+" Last Change: Wed, 27 Feb 2013 21:49:54 +0100
 "
-" Script: http://www.vim.org/scripts/script.php?script_id=
-" Copyright:   (c) 2009, 2010 by Christian Brabandt
+" Script: http://www.vim.org/scripts/script.php?script_id=3216
+" Copyright:   (c) 2009, 2010, 2011, 2012, 2013 by Christian Brabandt
 "              The VIM LICENSE applies to NrrwRgn.vim 
 "              (see |copyright|) except use "Replay.vim" 
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: 3216 4 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 5 :AutoInstall: Replay.vim
 "
 " Init:
 if exists("g:loaded_replay") || &cp || &ul == -1
