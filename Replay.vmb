@@ -5,18 +5,18 @@ plugin/ReplayPlugin.vim	[[[1
 34
 " Replay.vim - Replay your editing Session
 " -------------------------------------------------------------
-" Version: 0.3
+" Version: 0.4
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Fri, 27 Aug 2010 14:18:31 +0200
+" Last Change: Wed, 27 Feb 2013 21:49:54 +0100
 "
-" Script: http://www.vim.org/scripts/script.php?script_id=
-" Copyright:   (c) 2009, 2010 by Christian Brabandt
+" Script: http://www.vim.org/scripts/script.php?script_id=3216
+" Copyright:   (c) 2009, 2010, 2011, 2012, 2013 by Christian Brabandt
 "              The VIM LICENSE applies to NrrwRgn.vim 
 "              (see |copyright|) except use "Replay.vim" 
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: 3216 4 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 5 :AutoInstall: Replay.vim
 "
 " Init:
 if exists("g:loaded_replay") || &cp || &ul == -1
@@ -38,23 +38,24 @@ let &cpo=s:cpo
 unlet s:cpo
 " vim: ts=4 sts=4 fdm=marker com+=l\:\" fdm=syntax
 autoload/Replay.vim	[[[1
-166
+220
 " Replay.vim - Replay your editing Session
 " -------------------------------------------------------------
-" Version: 0.3
+" Version: 0.4
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Fri, 27 Aug 2010 14:18:31 +0200
+" Last Change: Wed, 27 Feb 2013 21:49:54 +0100
 "
-" Script: http://www.vim.org/scripts/script.php?script_id=
-" Copyright:   (c) 2009, 2010 by Christian Brabandt
+" Script: http://www.vim.org/scripts/script.php?script_id=3216
+" Copyright:   (c) 2009, 2010, 2011, 2012, 2013  by Christian Brabandt
 "              The VIM LICENSE applies to NrrwRgn.vim 
 "              (see |copyright|) except use "Replay.vim" 
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: 3216 4 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 5 :AutoInstall: Replay.vim
 "
-fun! <sid>WarningMsg(msg)"{{{1
+let s:dir=fnamemodify(expand("<sfile>"), ':p:h')
+fun! <sid>WarningMsg(msg) "{{{1
         echohl WarningMsg
         let msg = "ReplayPlugin: " . a:msg
         if exists(":unsilent") == 2
@@ -75,9 +76,18 @@ fun! <sid>Init() "{{{1
     endif
     " Customization
     let s:replay_speed  = (exists("g:replay_speed")   ? g:replay_speed    : 200)
+	let s:replay_save   = (exists("g:replay_record")  ? g:replay_record   : '')
+	if !empty(s:replay_save) &&
+		\ !(executable("ffmpeg") || executable("avconv")) &&
+		\ !empty(expand("$DISPLAY"))
+		" ffmpeg/avconv not available in $PATH or not running on X11 server
+		let s:replay_save = ''
+	endif
 endfun 
 
 fun! Replay#Replay(tag) "{{{1
+	let _fen = &fen
+	setl nofen " disable folding, so the changes can be better viewed.
     call <sid>Init()
 	if empty(a:tag)
 		let tag='Default'
@@ -102,6 +112,36 @@ fun! Replay#Replay(tag) "{{{1
         exe "undo " undo_change.start
     endif
     let t=changenr()
+	let pid = 0
+	if !empty(s:replay_save)   &&
+	  \ exists("v:windowid")   &&
+	  \ executable("xwininfo") &&
+      \ <sid>Is('unix')
+
+		let geom = {}
+
+		" get window coordinates
+		let msg  = system("LC_ALL=C xwininfo -id ". v:windowid.
+					\ '|grep "Absolute\|Width\|Height"')
+		let geom["x"]      = matchstr(msg, '\s*Absolute upper-left X:\s\+\zs\d\+\ze\s*\n') + 0
+		let geom["y"]      = matchstr(msg, '\s*Absolute upper-left Y:\s\+\zs\d\+\ze\s*\n') + 0
+		let geom["width"]  = matchstr(msg, '\s*Width:\s\+\zs\d\+\ze\s*\n') + 0
+		let geom["height"] = matchstr(msg, '\s*Height:\s\+\zs\d\+\ze\s*\n') + 0
+
+		" record screen
+		let cmd = printf('%s -f x11grab -s hd720 -show_region 1 -framerate 10'.
+					\ ' -i %s -vf crop=%d:%d:%d:%d %s/Replay_%d.mkv',
+					\ s:replay_save,
+					\ (strlen($DISPLAY) == 2 ? $DISPLAY.'.0' : $DISPLAY),
+					\ geom.width, geom.height, geom.x, geom.y,
+					\ (filewritable(getcwd()) == 2 ? getcwd() : '$HOME'),
+					\ strftime('%Y%m%d', localtime())
+					\ )
+		let cmd = 'sh '. s:dir. '/screencapture.sh '. cmd
+		let pid=system(cmd)
+		" sleep shortly
+        exe "sleep " .s:replay_speed . 'm'
+	endif
     while t < stop_change
         silent norm! g+
 		norm! zz
@@ -109,6 +149,10 @@ fun! Replay#Replay(tag) "{{{1
         exe "sleep " .s:replay_speed . 'm'
 		let t=changenr()
     endw
+    if pid && <sid>Is('unix')
+		call system('kill '. pid)
+	endif
+	let &l:fen = _fen
 	call winrestview(curpos)
 endfun
 
@@ -203,16 +247,26 @@ fun! <sid>LastStartedRecording() "{{{1
 	endfor
 	return key
 endfun
+
+fun! <sid>Is(os) "{{{1
+    if (a:os == "win")
+        return has("win32") || has("win16") || has("win64")
+    elseif (a:os == "mac")
+        return has("mac") || has("macunix")
+    elseif (a:os == "unix")
+        return has("unix") || has("macunix")
+    endif
+endfu
 " Modeline "{{{1
 " vim: ts=4 sts=4 fdm=marker com+=l\:\" fdl=0
 doc/Replay.txt	[[[1
-119
+149
 *Replay.txt*   A plugin to record and replay your editing sessions
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.3 Fri, 27 Aug 2010 14:18:31 +0200
+Version: 0.4 Wed, 27 Feb 2013 21:49:54 +0100
 
-Copyright: (c) 2009, 2010 by Christian Brabandt
+Copyright: (c) 2009, 2010, 2011, 2012, 2013 by Christian Brabandt
            The VIM LICENSE applies to Replay.vim (see |copyright|)
            except use Replay.vim instead of "Vim".
            NO WARRANTY, EXPRESS OR IMPLIED.  USE AT-YOUR-OWN-RISK.
@@ -223,9 +277,11 @@ Copyright: (c) 2009, 2010 by Christian Brabandt
 
         1.  Contents.....................................: |ReplayPlugin|
         2.  Replay Manual................................: |Replay-manual|
-        2.1   Replay Configuration.......................: |Replay-config|
-        3.  Replay Feedback..............................: |Replay-feedback|
-        4.  Replay History...............................: |Replay-history|
+        3.  Replay Configuration.........................: |Replay-config|
+        3.1   Replay Speed...............................: |Replay-speed|
+        3.2   Replay Recording...........................: |Replay-record|
+        4.  Replay Feedback..............................: |Replay-feedback|
+        5.  Replay History...............................: |Replay-history|
 
 ==============================================================================
 2. Replay Manual                                            *Replay-manual*
@@ -277,7 +333,9 @@ o'clock. Please bear in mind, that the starting time for the Default-Tag can't
 exactly be given, but is the first time, any of the above commands was called.
 
 ==============================================================================
-2.1 Replay Configuration                                    *Replay-config*
+3 Replay Configuration                                       *Replay-config*
+
+3.1 Replay Speed                                              *Replay-speed*
 
 You can configure the speed, with which to replay the changes, that have been
 done. By default, Replay.vim pauses for 200ms after every change. If you want
@@ -288,8 +346,26 @@ your |.vimrc| >
 <
 will replay your editing session with slower and pauses for 300ms after every
 change.
+
+3.2 Replay Recording                                        *Replay-record*
+
+It is possible to record the replay using avconv/ffmeg. For this to work, you
+need ffmpeg/avconv installed and vim needs to be run on an X11-Server. To
+enable this, set the variable g:replay_record to either ffmpeg or avconv
+(whichever of the two tools you want to use for screen capturing) in your
+|.vimrc| like this: >
+
+    let g:replay_record = 'avconv'
+<
+When the replay is started, it will be recorded using ffmpeg/avconv for 
+screencapturing and the result will be saved as Replay_YYYYMMDD.mkv in either
+the current working directory (|:pwd|) if it is writable or your $HOME
+directory.
+
+(Note, this currently works only on Unix/Linux).
+
 ==============================================================================
-3. Replay Feedback                                         *Replay-feedback*
+4. Replay Feedback                                         *Replay-feedback*
 
 Feedback is always welcome. If you like the plugin, please rate it at the
 vim-page:
@@ -302,9 +378,15 @@ Please don't hesitate to report any bugs to the maintainer, mentioned in the
 third line of this document.
 
 ==============================================================================
-4. Replay History                                          *Replay-history*
+5. Replay History                                          *Replay-history*
 
-0.3: Aug 27, 2010
+0.4: Feb 27, 2013 {{{1
+
+- disable folding
+- enable to screenrecord the replay using ffmpeg/avconv
+
+0.3: Aug 27, 2010 {{{1
+
 - Automatically stopp Recording for latest started Recording session
   (suggested by Salim Halim, thanks!)
 - Changed recording of time to use localtime() instead of storing a string
@@ -312,17 +394,25 @@ third line of this document.
 - ListRecordings now also displays the change number (so you can easily jump
   to a change using :undo)
 
-0.2: Aug 24, 2010
+0.2: Aug 24, 2010  {{{1
+
 - Enabled |GLVS|
 - small bugfixes
 - changed default playback rate to 200ms
 
-0.1: Aug 23, 2010       
+0.1: Aug 23, 2010 {{{1
 
 - Initial upload
 - development versions are available at the github repository
 - put plugin on a public repository (http://github.com/chrisbra/NrrwRgn)
 
+  }}}
 ==============================================================================
-Modeline:
-vim:tw=78:ts=8:ft=help:et
+Modeline: {{{1
+vim:tw=78:ts=8:ft=help:et:fdm=marker:fdl=0:norl
+autoload/screencapture.sh	[[[1
+4
+#!/bin/sh
+$@ &
+# return pid of screen capturing process so we can kill it later
+echo $!
