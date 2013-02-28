@@ -44,6 +44,86 @@ fun! <sid>Init() "{{{1
 	endif
 endfun 
 
+fun! <sid>LastChange() "{{{1
+	redir => a | silent! undolist |redir end
+	let b=split(a, "\n")[-1]
+	if b !~ '\d'
+		return 0
+	endif
+	return split(b)[0]
+endfun
+
+fun! <sid>MaxTagLength() "{{{1
+    let list=keys(b:replay_data)
+    call map(list, 'len(v:val)')
+    return max(list)
+endfun
+
+fun! <sid>LastStartedRecording() "{{{1
+	let a=copy(b:replay_data)
+	call filter(a, '!exists("v:val.stop")')
+	let key=''
+	let time=0
+	for item in keys(a)
+		if a[item].start_time > time
+		   let time=a[item].start_time
+		   let key = item
+		endif
+	endfor
+	return key
+endfun
+
+fun! <sid>Is(os) "{{{1
+    if (a:os == "win")
+        return has("win32") || has("win16") || has("win64")
+    elseif (a:os == "mac")
+        return has("mac") || has("macunix")
+    elseif (a:os == "unix")
+        return has("unix") || has("macunix")
+    endif
+endfu
+fun! Replay#TagState(tag, bang) "{{{1
+	call <sid>Init()
+    let tag=(empty(a:tag) ? 'Default' : a:tag)
+    if exists("b:replay_data.".tag) && !a:bang
+        call <sid>WarningMsg("Tag " . tag . " already exists!")
+        return
+    else
+		let b:replay_data[tag] = {}
+        let b:replay_data[tag].start = changenr()
+        let b:replay_data[tag].start_time = localtime()
+    endif
+endfun
+
+fun! Replay#TagStopState(tag) "{{{1
+	call <sid>Init()
+    "let tag=(empty(a:tag) ? 'Default' : a:tag)
+	let tag=(empty(a:tag) ? <sid>LastStartedRecording() : a:tag)
+    if !exists("b:replay_data.".tag) "&& tag != 'Default'
+        call <sid>WarningMsg("Tag " . tag . " not found!")
+        return
+    else
+		let change=changenr()
+		if tag == 'Default'
+			let b:replay_data[tag] = {}
+		endif
+		" If stop is before start, swap both changes
+		if !exists("b:replay_data[tag].start")
+			let b:replay_data[tag].start = 0
+			let b:replay_data[tag].stop = change
+			let b:replay_data[tag].stop_time = localtime()
+		elseif b:replay_data[tag].start > change
+			let b:replay_data[tag].stop = b:replay_data[tag].start
+			let b:replay_data[tag].start = change
+			let b:replay_data[tag].stop_time = localtime()
+		else
+			let b:replay_data[tag].stop = change
+			let b:replay_data[tag].stop_time = localtime()
+		endif
+    endif
+	call <sid>WarningMsg("Stopped Recording of: " . tag . " tag")
+endfun
+
 fun! Replay#Replay(tag) "{{{1
 	let _fen = &fen
 	setl nofen " disable folding, so the changes can be better viewed.
@@ -147,63 +227,6 @@ fun! Replay#ScreenCapture(on) "{{{1
 	endif
 endfu
 
-fun! <sid>LastChange() "{{{1
-	redir => a | silent! undolist |redir end
-	let b=split(a, "\n")[-1]
-	if b !~ '\d'
-		return 0
-	endif
-	return split(b)[0]
-endfun
-
-fun! Replay#TagState(tag, bang) "{{{1
-	call <sid>Init()
-    let tag=(empty(a:tag) ? 'Default' : a:tag)
-    if exists("b:replay_data.".tag) && !a:bang
-        call <sid>WarningMsg("Tag " . tag . " already exists!")
-        return
-    else
-		let b:replay_data[tag] = {}
-        let b:replay_data[tag].start = changenr()
-        let b:replay_data[tag].start_time = localtime()
-    endif
-endfun
-
-fun! Replay#TagStopState(tag) "{{{1
-	call <sid>Init()
-    "let tag=(empty(a:tag) ? 'Default' : a:tag)
-	let tag=(empty(a:tag) ? <sid>LastStartedRecording() : a:tag)
-    if !exists("b:replay_data.".tag) "&& tag != 'Default'
-        call <sid>WarningMsg("Tag " . tag . " not found!")
-        return
-    else
-		let change=changenr()
-		if tag == 'Default'
-			let b:replay_data[tag] = {}
-		endif
-		" If stop is before start, swap both changes
-		if !exists("b:replay_data[tag].start")
-			let b:replay_data[tag].start = 0
-			let b:replay_data[tag].stop = change
-			let b:replay_data[tag].stop_time = localtime()
-		elseif b:replay_data[tag].start > change
-			let b:replay_data[tag].stop = b:replay_data[tag].start
-			let b:replay_data[tag].start = change
-			let b:replay_data[tag].stop_time = localtime()
-		else
-			let b:replay_data[tag].stop = change
-			let b:replay_data[tag].stop_time = localtime()
-		endif
-    endif
-	call <sid>WarningMsg("Stopped Recording of: " . tag . " tag")
-endfun
-
-fun! <sid>MaxTagLength() "{{{1
-    let list=keys(b:replay_data)
-    call map(list, 'len(v:val)')
-    return max(list)
-endfun
-
 fun! Replay#ListStates() "{{{1
     call <sid>Init()
     echohl Title
@@ -228,28 +251,5 @@ fun! Replay#CompleteTags(A,L,P) "{{{1
 	 return join(sort(keys(b:replay_data)),"\n")
 endfun
 
-fun! <sid>LastStartedRecording() "{{{1
-	let a=copy(b:replay_data)
-	call filter(a, '!exists("v:val.stop")')
-	let key=''
-	let time=0
-	for item in keys(a)
-		if a[item].start_time > time
-		   let time=a[item].start_time
-		   let key = item
-		endif
-	endfor
-	return key
-endfun
-
-fun! <sid>Is(os) "{{{1
-    if (a:os == "win")
-        return has("win32") || has("win16") || has("win64")
-    elseif (a:os == "mac")
-        return has("mac") || has("macunix")
-    elseif (a:os == "unix")
-        return has("unix") || has("macunix")
-    endif
-endfu
 " Modeline "{{{1
 " vim: ts=4 sts=4 fdm=marker com+=l\:\" fdl=0
