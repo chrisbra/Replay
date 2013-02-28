@@ -141,7 +141,7 @@ fun! Replay#ScreenCapture(on) "{{{1
 		endif
 	else
 		" kill an existing screen recording session
-		if s:pid && <sid>Is('unix')
+		if exists("s:pid") && <sid>Is('unix')
 			call system('kill '. s:pid)
 		endif
 	endif

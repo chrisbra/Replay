@@ -53,6 +53,12 @@ to a buffer.
                             You can use <Tab> to complete the available Tag
                             names
 
+                                                            *:ScreenCapture*
+:ScreenCapture[!]           If you have enabled screen capturing to video,
+                            this command will start a screen capturing session
+                            to video or stop it (if :ScreenCapture!) is used.
+                            See also |Replay-record| for how to enable it.
+
                                                             *:ListRecords*
 :ListRecords                Show which tags are available. This presents a
                             little table that looks like this:
