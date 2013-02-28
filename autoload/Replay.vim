@@ -75,35 +75,9 @@ fun! Replay#Replay(tag) "{{{1
         exe "undo " undo_change.start
     endif
     let t=changenr()
-	let pid = 0
-	if !empty(s:replay_save)   &&
-	  \ exists("v:windowid")   &&
-	  \ executable("xwininfo") &&
-      \ <sid>Is('unix')
-
-		let geom = {}
-
-		" get window coordinates
-		let msg  = system("LC_ALL=C xwininfo -id ". v:windowid.
-					\ '|grep "Absolute\|Width\|Height"')
-		let geom["x"]      = matchstr(msg, '\s*Absolute upper-left X:\s\+\zs\d\+\ze\s*\n') + 0
-		let geom["y"]      = matchstr(msg, '\s*Absolute upper-left Y:\s\+\zs\d\+\ze\s*\n') + 0
-		let geom["width"]  = matchstr(msg, '\s*Width:\s\+\zs\d\+\ze\s*\n') + 0
-		let geom["height"] = matchstr(msg, '\s*Height:\s\+\zs\d\+\ze\s*\n') + 0
-
-		" record screen
-		let cmd = printf('%s -f x11grab -s hd720 -show_region 1 -framerate 10'.
-					\ ' -i %s -vf crop=%d:%d:%d:%d %s/Replay_%d.mkv',
-					\ s:replay_save,
-					\ (strlen($DISPLAY) == 2 ? $DISPLAY.'.0' : $DISPLAY),
-					\ geom.width, geom.height, geom.x, geom.y,
-					\ (filewritable(getcwd()) == 2 ? getcwd() : '$HOME'),
-					\ strftime('%Y%m%d', localtime())
-					\ )
-		let cmd = 'sh '. s:dir. '/screencapture.sh '. cmd
-		let pid=system(cmd)
-		" sleep shortly
-        exe "sleep " .s:replay_speed . 'm'
+	" Record screen?
+	if !empty(s:replay_save)
+		call Replay#ScreenCapture('on')
 	endif
     while t < stop_change
         silent norm! g+
@@ -112,12 +86,66 @@ fun! Replay#Replay(tag) "{{{1
         exe "sleep " .s:replay_speed . 'm'
 		let t=changenr()
     endw
-    if pid && <sid>Is('unix')
-		call system('kill '. pid)
+	if !empty(s:replay_save)
+		call Replay#ScreenCapture('off')
 	endif
 	let &l:fen = _fen
 	call winrestview(curpos)
 endfun
+
+fun! Replay#ScreenCapture(on) "{{{1
+	if a:on ==? 'on'
+		" Start Screen Recording
+		call <sid>Init()
+		if empty(s:replay_save)
+			call <sid>WarningMsg("No screen recording software available!")
+			return
+		endif
+
+		" Check needed pre-conditions
+		if exists("v:windowid")      &&
+		\ executable("xwininfo")     &&
+		\ !empty(expand("$DISPLAY")) &&
+		\ <sid>Is('unix')
+
+			let geom = {}
+
+			" get window coordinates
+			let msg  = system("LC_ALL=C xwininfo -id ". v:windowid.
+						\ '|grep "Absolute\|Width\|Height"')
+			let geom["x"]      = matchstr(msg, '\s*Absolute upper-left X:\s\+\zs\d\+\ze\s*\n') + 0
+			let geom["y"]      = matchstr(msg, '\s*Absolute upper-left Y:\s\+\zs\d\+\ze\s*\n') + 0
+			let geom["width"]  = matchstr(msg, '\s*Width:\s\+\zs\d\+\ze\s*\n') + 0
+			let geom["height"] = matchstr(msg, '\s*Height:\s\+\zs\d\+\ze\s*\n') + 0
+
+			" record screen
+			let cmd = printf('%s -f x11grab -s hd720 -show_region 1 -framerate 10'.
+						\ ' -i %s -vf crop=%d:%d:%d:%d -y %s/Replay_%d.mkv',
+						\ s:replay_save,
+						\ (strlen($DISPLAY) == 2 ? $DISPLAY.'.0' : $DISPLAY),
+						\ geom.width, geom.height, geom.x, geom.y,
+						\ (filewritable(getcwd()) == 2 ? getcwd() : '$HOME'),
+						\ strftime('%Y%m%d', localtime())
+						\ )
+			let cmd = 'sh '. s:dir. '/screencapture.sh '. cmd
+			if !exists("#ScreenCaptureQuit#VimLeave")
+				" Stop screen recording when quitting vim
+				augroup ScreenCaptureQuit
+					au!
+					au VimLeave * :call Replay#ScreenCapture('off')
+				augroup end
+			endif
+			let s:pid=system(cmd)
+			" sleep shortly
+			exe "sleep " .s:replay_speed . 'm'
+		endif
+	else
+		" kill an existing screen recording session
+		if s:pid && <sid>Is('unix')
+			call system('kill '. s:pid)
+		endif
+	endif
+endfu
 
 fun! <sid>LastChange() "{{{1
 	redir => a | silent! undolist |redir end

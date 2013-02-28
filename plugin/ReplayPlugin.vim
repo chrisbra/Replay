@@ -27,6 +27,7 @@ com! -bang -nargs=? -complete=custom,Replay#CompleteTags StartRecord :call Repla
 com! -complete=custom,Replay#CompleteTags -nargs=? StopRecord :call Replay#TagStopState(<q-args>)
 com! -nargs=? -complete=custom,Replay#CompleteTags Replay :call Replay#Replay(<q-args>)
 com! ListRecords :call Replay#ListStates()
+com! -bang ScreenRecord :call Replay#ScreenCapture((empty("<bang>") ? "on" : "off"))
 
 " Restore:
 let &cpo=s:cpo
