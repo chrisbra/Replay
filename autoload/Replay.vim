@@ -60,6 +60,10 @@ fun! Replay#Replay(tag) "{{{1
 	let curpos=winsaveview()
     let undo_change=get(b:replay_data, tag)
     let stop_change=<sid>LastChange()
+	if !stop_change
+		call <sid>WarningMsg("No undo data to replay available!")
+		return
+	endif
 
     if undo_change.start==0
         undo 1
@@ -118,6 +122,9 @@ endfun
 fun! <sid>LastChange() "{{{1
 	redir => a | silent! undolist |redir end
 	let b=split(a, "\n")[-1]
+	if b !~ '\d'
+		return 0
+	endif
 	return split(b)[0]
 endfun
 
