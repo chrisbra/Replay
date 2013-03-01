@@ -35,12 +35,22 @@ fun! <sid>Init() "{{{1
     endif
     " Customization
     let s:replay_speed  = (exists("g:replay_speed")   ? g:replay_speed    : 200)
-	let s:replay_save   = (exists("g:replay_record")  ? g:replay_record   : '')
-	if !empty(s:replay_save) &&
-		\ !(executable("ffmpeg") || executable("avconv")) &&
-		\ !empty(expand("$DISPLAY"))
+	let s:replay_save   = (exists("g:replay_record")  ? g:replay_record   : 0 )
+	let s:replay_record_param = {}
+	if s:replay_save &&
+	\ !(executable("ffmpeg") || executable("avconv")) &&
+	\ !empty(expand("$DISPLAY"))
 		" ffmpeg/avconv not available in $PATH or not running on X11 server
-		let s:replay_save = ''
+		let s:replay_save = 0
+	else
+		let s:replay_record_param['format'] = 'mkv'  " could be mkv, mpg, avi etc...
+		let s:replay_record_param['exe']    = ( executable("avconv") ? 'avconv' : 'ffmpeg')
+		let s:replay_record_param['log']    = "/tmp/replay.log"
+		let s:replay_record_param['opts']    = "-f x11grab -s hd720 -show_region 1 -framerate 10 -y "
+		let s:replay_record_param['file']    = "Vim_Recording"
+	endif
+	if s:replay_save && exists("g:replay_record_param")
+		call extend(s:replay_record_param, g:replay_record_param, 'force')
 	endif
 endfun 
 
@@ -156,7 +166,7 @@ fun! Replay#Replay(tag) "{{{1
     endif
     let t=changenr()
 	" Record screen?
-	if !empty(s:replay_save)
+	if s:replay_save
 		call Replay#ScreenCapture('on')
 	endif
     while t < stop_change
@@ -166,7 +176,7 @@ fun! Replay#Replay(tag) "{{{1
         exe "sleep " .s:replay_speed . 'm'
 		let t=changenr()
     endw
-	if !empty(s:replay_save)
+	if s:replay_save
 		call Replay#ScreenCapture('off')
 	endif
 	let &l:fen = _fen
@@ -177,7 +187,7 @@ fun! Replay#ScreenCapture(on) "{{{1
 	if a:on ==? 'on'
 		" Start Screen Recording
 		call <sid>Init()
-		if empty(s:replay_save)
+		if !s:replay_save
 			call <sid>WarningMsg("No screen recording software available!")
 			return
 		endif
@@ -199,14 +209,17 @@ fun! Replay#ScreenCapture(on) "{{{1
 			let geom["height"] = matchstr(msg, '\s*Height:\s\+\zs\d\+\ze\s*\n') + 0
 
 			" record screen
-			let cmd = printf('%s -f x11grab -s hd720 -show_region 1 -framerate 10'.
-						\ ' -i %s -vf crop=%d:%d:%d:%d -y %s/Replay_%d.mkv',
-						\ s:replay_save,
+			let cmd = printf('%s %s -i %s -vf crop=%d:%d:%d:%d %s/%s_%d.%s %s',
+						\ s:replay_record_param['exe'],
+						\ s:replay_record_param['opts'],
 						\ (strlen($DISPLAY) == 2 ? $DISPLAY.'.0' : $DISPLAY),
 						\ geom.width, geom.height, geom.x, geom.y,
 						\ (filewritable(getcwd()) == 2 ? getcwd() : '$HOME'),
-						\ strftime('%Y%m%d', localtime())
-						\ )
+						\ s:replay_record_param['file'],
+						\ strftime('%Y%m%d', localtime()),
+						\ s:replay_record_param['format'],
+						\ exists("s:replay_record_param['log']") ?
+						\ '2> '. s:replay_record_param['log']  : '')
 			let cmd = 'sh '. s:dir. '/screencapture.sh '. cmd
 			if !exists("#ScreenCaptureQuit#VimLeave")
 				" Stop screen recording when quitting vim

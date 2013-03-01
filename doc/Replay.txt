@@ -94,18 +94,17 @@ change.
 
 It is possible to record the replay using avconv/ffmeg. For this to work, you
 need ffmpeg/avconv installed and vim needs to be run on an X11-Server. To
-enable this, set the variable g:replay_record to either ffmpeg or avconv
-(whichever of the two tools you want to use for screen capturing) in your
-|.vimrc| like this: >
+enable this, set the variable g:replay_record to 1 in your |.vimrc| like this: >
 
-    let g:replay_record = 'avconv'
+    let g:replay_record = 1
 <
-When the replay is started, it will be recorded using ffmpeg/avconv for 
-screencapturing and the result will be saved as Replay_YYYYMMDD.mkv in either
-the current working directory (|:pwd|) if it is writable or your $HOME
+When the replay is started, it will be recorded using ffmpeg/avconv for
+screencapturing and the result will be saved as Vim_Recording_YYYYMMDD.mkv in
+either the current working directory (|:pwd|) if it is writable or your $HOME
 directory.
 
-(Note, this currently works only on Unix/Linux).
+(Note, this currently works only on Unix/Linux and you need ffmpeg or avconv
+in your path for this to work)
 
 ==============================================================================
 4. Replay Feedback                                         *Replay-feedback*
