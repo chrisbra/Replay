@@ -186,6 +186,12 @@ endfun
 fun! Replay#ScreenCapture(on) "{{{1
 	if a:on ==? 'on'
 		" Start Screen Recording
+		if get(g:, 'replay_record', 0)
+			let s:isset_replay_record=1
+		else
+			let s:isset_replay_record=0
+			let g:replay_record=1
+		endif
 		call <sid>Init()
 		if !s:replay_save
 			call <sid>WarningMsg("No screen recording software available!")
@@ -236,6 +242,9 @@ fun! Replay#ScreenCapture(on) "{{{1
 		" kill an existing screen recording session
 		if exists("s:pid") && <sid>Is('unix')
 			call system('kill '. s:pid)
+		endif
+		if exists("s:isset_replay_record") && s:isset_replay_record = 0
+			unlet! g:replay_record
 		endif
 	endif
 endfu
