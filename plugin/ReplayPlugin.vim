@@ -27,7 +27,11 @@ com! -bang -nargs=? -complete=custom,Replay#CompleteTags StartRecord :call Repla
 com! -complete=custom,Replay#CompleteTags -nargs=? StopRecord :call Replay#TagStopState(<q-args>)
 com! -nargs=? -complete=custom,Replay#CompleteTags Replay :call Replay#Replay(<q-args>)
 com! ListRecords :call Replay#ListStates()
-com! -bang ScreenRecord :call Replay#ScreenCapture((empty("<bang>") ? "on" : "off"))
+com! -bang -nargs=* -complete=customlist,<sid>ScreenRecordUsage ScreenRecord :call Replay#ScreenCapture((empty("<bang>") ? "on" : "off"), <q-args>)
+
+fu! <sid>ScreenRecordUsage(A,L,P)
+	return ['[-shell] [filename] - Start Screen Capture [as filename] [and start a shell]', '! - Stop current recording session']
+endfu
 
 " Restore:
 let &cpo=s:cpo

@@ -183,7 +183,7 @@ fun! Replay#Replay(tag) "{{{1
 	call winrestview(curpos)
 endfun
 
-fun! Replay#ScreenCapture(on) "{{{1
+fun! Replay#ScreenCapture(on, args) "{{{1
 	if a:on ==? 'on'
 		" Start Screen Recording
 		if get(g:, 'replay_record', 0)
@@ -196,6 +196,11 @@ fun! Replay#ScreenCapture(on) "{{{1
 		if !s:replay_save
 			call <sid>WarningMsg("No screen recording software available!")
 			return
+		endif
+
+		let args = matchlist(a:args, '^\s*\(-shell\)\?\s*\(\f\+\)\?')
+		if !empty(args) && !empty(args[2])
+			let s:replay_record_param['file'] = args[2]
 		endif
 
 		" Check needed pre-conditions
@@ -234,16 +239,24 @@ fun! Replay#ScreenCapture(on) "{{{1
 					au VimLeave * :call Replay#ScreenCapture('off')
 				augroup end
 			endif
-			let s:pid=system(cmd)
-			" sleep shortly
-			exe "sleep " .s:replay_speed . 'm'
+			if !empty(args) && !empty(args[1])
+				echom "Starting Shell, press <C-D> to return to this session"
+				" give the user a possibility to read the message
+				exe "sleep 2"
+				let s:pid=system(cmd)
+				exe ":sh"
+			else
+				let s:pid=system(cmd)
+				" sleep shortly
+				exe "sleep " .s:replay_speed . 'm'
+			endif
 		endif
 	else
 		" kill an existing screen recording session
 		if exists("s:pid") && <sid>Is('unix')
 			call system('kill '. s:pid)
 		endif
-		if exists("s:isset_replay_record") && s:isset_replay_record = 0
+		if exists("s:isset_replay_record") && s:isset_replay_record == 0
 			unlet! g:replay_record
 		endif
 	endif
