@@ -5,9 +5,9 @@ plugin/ReplayPlugin.vim	[[[1
 39
 " Replay.vim - Replay your editing Session
 " -------------------------------------------------------------
-" Version: 0.4
+" Version: 0.5
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Wed, 27 Feb 2013 21:49:54 +0100
+" Last Change: Wed, 14 Aug 2013 22:26:12 +0200
 "
 " Script: http://www.vim.org/scripts/script.php?script_id=3216
 " Copyright:   (c) 2009, 2010, 2011, 2012, 2013 by Christian Brabandt
@@ -16,7 +16,7 @@ plugin/ReplayPlugin.vim	[[[1
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: 3216 5 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 6 :AutoInstall: Replay.vim
 "
 " Init:
 if exists("g:loaded_replay") || &cp || &ul == -1
@@ -46,9 +46,9 @@ autoload/Replay.vim	[[[1
 290
 " Replay.vim - Replay your editing Session
 " -------------------------------------------------------------
-" Version: 0.4
+" Version: 0.5
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Wed, 27 Feb 2013 21:49:54 +0100
+" Last Change: Wed, 14 Aug 2013 22:26:12 +0200
 "
 " Script: http://www.vim.org/scripts/script.php?script_id=3216
 " Copyright:   (c) 2009, 2010, 2011, 2012, 2013  by Christian Brabandt
@@ -57,7 +57,7 @@ autoload/Replay.vim	[[[1
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: 3216 5 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 6 :AutoInstall: Replay.vim
 "
 let s:dir=fnamemodify(expand("<sfile>"), ':p:h')
 fun! <sid>WarningMsg(msg) "{{{1
@@ -335,11 +335,11 @@ endfun
 " Modeline "{{{1
 " vim: ts=4 sts=4 fdm=marker com+=l\:\" fdl=0
 doc/Replay.txt	[[[1
-157
+172
 *Replay.txt*   A plugin to record and replay your editing sessions
 
 Author:  Christian Brabandt <cb@256bit.org>
-Version: 0.4 Wed, 27 Feb 2013 21:49:54 +0100
+Version: 0.5 Wed, 14 Aug 2013 22:26:12 +0200
 
 Copyright: (c) 2009, 2010, 2011, 2012, 2013 by Christian Brabandt
            The VIM LICENSE applies to Replay.vim (see |copyright|)
@@ -392,10 +392,18 @@ to a buffer.
                             names
 
                                                             *:ScreenCapture*
-:ScreenCapture[!]           If you have enabled screen capturing to video,
+:ScreenCapture[!] [-shell] [filename]
+
+                            If you have enabled screen capturing to video,
                             this command will start a screen capturing session
                             to video or stop it (if :ScreenCapture!) is used.
-                            See also |Replay-record| for how to enable it.
+                            If you used the -shell argument, a new shell will
+                            be started, else the current Vim session will be
+                            recorded.
+                            [filename] can optionally be given and
+                            will be the name of the recorded session with the
+                            date appended to it. See also |Replay-record| for
+                            how to enable it.
 
                                                             *:ListRecords*
 :ListRecords                Show which tags are available. This presents a
@@ -434,15 +442,18 @@ It is possible to record the replay using avconv/ffmeg. For this to work, you
 need ffmpeg/avconv installed and vim needs to be run on an X11-Server. To
 enable this, set the variable g:replay_record to 1 in your |.vimrc| like this: >
 
+
     let g:replay_record = 1
 <
 When the replay is started, it will be recorded using ffmpeg/avconv for
-screencapturing and the result will be saved as Vim_Recording_YYYYMMDD.mkv in
-either the current working directory (|:pwd|) if it is writable or your $HOME
-directory.
+screencapturing and the result will be saved as Vim_Recording_YYYYMMDD.mkv (in
+case you haven't specified an optional filename else it will be saved as
+filename_YYYYMMDD.mkv) in either the current working directory (|:pwd|) if it
+is writable or your $HOME directory. If you have used the optional -shell
+argument, a new |:sh| will be started.
 
 (Note, this currently works only on Unix/Linux and you need ffmpeg or avconv
-in your path for this to work)
+in your $PATH for this to work)
 
 ==============================================================================
 4. Replay Feedback                                         *Replay-feedback*
@@ -459,6 +470,10 @@ third line of this document.
 
 ==============================================================================
 5. Replay History                                          *Replay-history*
+
+0.5: Aug 14, 2013 {{{2
+
+- improvements for |:ScreenCapture| capture
 
 0.4: Feb 27, 2013 {{{1
 

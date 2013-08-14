@@ -1,8 +1,8 @@
 " Replay.vim - Replay your editing Session
 " -------------------------------------------------------------
-" Version: 0.4
+" Version: 0.5
 " Maintainer:  Christian Brabandt <cb@256bit.org>
-" Last Change: Wed, 27 Feb 2013 21:49:54 +0100
+" Last Change: Wed, 14 Aug 2013 22:26:12 +0200
 "
 " Script: http://www.vim.org/scripts/script.php?script_id=3216
 " Copyright:   (c) 2009, 2010, 2011, 2012, 2013  by Christian Brabandt
@@ -11,7 +11,7 @@
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
-" GetLatestVimScripts: 3216 5 :AutoInstall: Replay.vim
+" GetLatestVimScripts: 3216 6 :AutoInstall: Replay.vim
 "
 let s:dir=fnamemodify(expand("<sfile>"), ':p:h')
 fun! <sid>WarningMsg(msg) "{{{1
