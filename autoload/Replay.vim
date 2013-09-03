@@ -6,8 +6,8 @@
 "
 " Script: http://www.vim.org/scripts/script.php?script_id=3216
 " Copyright:   (c) 2009, 2010, 2011, 2012, 2013  by Christian Brabandt
-"              The VIM LICENSE applies to NrrwRgn.vim 
-"              (see |copyright|) except use "Replay.vim" 
+"              The VIM LICENSE applies to NrrwRgn.vim
+"              (see |copyright|) except use "Replay.vim"
 "              instead of "Vim".
 "              No warranty, express or implied.
 "    *** ***   Use At-Your-Own-Risk!   *** ***
@@ -52,7 +52,7 @@ fun! <sid>Init() "{{{1
 	if s:replay_save && exists("g:replay_record_param")
 		call extend(s:replay_record_param, g:replay_record_param, 'force')
 	endif
-endfun 
+endfun
 
 fun! <sid>LastChange() "{{{1
 	redir => a | silent! undolist |redir end
@@ -183,7 +183,7 @@ fun! Replay#Replay(tag) "{{{1
 	call winrestview(curpos)
 endfun
 
-fun! Replay#ScreenCapture(on, args) "{{{1
+fun! Replay#ScreenCapture(on, ...) "{{{1
 	if a:on ==? 'on'
 		" Start Screen Recording
 		if get(g:, 'replay_record', 0)
@@ -198,9 +198,12 @@ fun! Replay#ScreenCapture(on, args) "{{{1
 			return
 		endif
 
-		let args = matchlist(a:args, '^\s*\(-shell\)\?\s*\(\f\+\)\?')
-		if !empty(args) && !empty(args[2])
-			let s:replay_record_param['file'] = args[2]
+		let args = []
+		if exists("a:1") && !empty(a:1)
+			let args = matchlist(a:1, '^\s*\(-shell\)\?\s*\(\f\+\)\?')
+			if !empty(args) && !empty(args[2])
+				let s:replay_record_param['file'] = args[2]
+			endif
 		endif
 
 		" Check needed pre-conditions
@@ -236,7 +239,7 @@ fun! Replay#ScreenCapture(on, args) "{{{1
 				" Stop screen recording when quitting vim
 				augroup ScreenCaptureQuit
 					au!
-					au VimLeave * :call Replay#ScreenCapture('off')
+					au VimLeavePre * :call Replay#ScreenCapture('off')
 				augroup end
 			endif
 			if !empty(args) && !empty(args[1])
