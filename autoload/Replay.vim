@@ -223,7 +223,17 @@ fun! Replay#ScreenCapture(on, ...) "{{{1
 			let geom["height"] = matchstr(msg, '\s*Height:\s\+\zs\d\+\ze\s*\n') + 0
 
 			" record screen
-			let cmd = printf('%s %s -i %s -vf crop=%d:%d:%d:%d %s/%s_%d.%s %s',
+			if s:replay_record_param['file'] =~ '.gif$' && executable('byzanz-record')
+				" try recording using byzanz
+				let cmd = printf('byzanz-record --display=%s --height=%s --width=%s --x=%s --y=%s %s %s',
+						\ (strlen($DISPLAY) == 2 ? $DISPLAY.'.0' : $DISPLAY),
+						\ geom.height, geom.width, geom.x, geom.y,
+						\ s:replay_record_param['file'],
+						\ exists("s:replay_record_param['log']") ?
+						\ '2> '. s:replay_record_param['log']  : '')
+			else
+				" fall back using ffmpeg/avconv
+				let cmd = printf('%s %s -i %s -vf crop=%d:%d:%d:%d %s/%s_%d.%s %s',
 						\ s:replay_record_param['exe'],
 						\ s:replay_record_param['opts'],
 						\ (strlen($DISPLAY) == 2 ? $DISPLAY.'.0' : $DISPLAY),
@@ -234,6 +244,7 @@ fun! Replay#ScreenCapture(on, ...) "{{{1
 						\ s:replay_record_param['format'],
 						\ exists("s:replay_record_param['log']") ?
 						\ '2> '. s:replay_record_param['log']  : '')
+			endif
 			let cmd = 'sh '. s:dir. '/screencapture.sh '. cmd
 			if !exists("#ScreenCaptureQuit#VimLeave")
 				" Stop screen recording when quitting vim
