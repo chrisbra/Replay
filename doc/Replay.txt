@@ -3,7 +3,7 @@
 Author:  Christian Brabandt <cb@256bit.org>
 Version: 0.5 Wed, 14 Aug 2013 22:26:12 +0200
 
-Copyright: (c) 2009, 2010, 2011, 2012, 2013 by Christian Brabandt
+Copyright: (c) 2009-2013 by Christian Brabandt
            The VIM LICENSE applies to Replay.vim (see |copyright|)
            except use Replay.vim instead of "Vim".
            NO WARRANTY, EXPRESS OR IMPLIED.  USE AT-YOUR-OWN-RISK.
@@ -64,8 +64,11 @@ to a buffer.
                             recorded.
                             [filename] can optionally be given and
                             will be the name of the recorded session with the
-                            date appended to it. See also |Replay-record| for
-                            how to enable it.
+                            date appended to it. If the filename ends with
+                            ".gif" and byzanz-record is installed, it will be
+                            used for recording (but it will only record 10
+                            seconds).
+                            See also |Replay-record| for how to enable it.
 
                                                             *:ListRecords*
 :ListRecords                Show which tags are available. This presents a
