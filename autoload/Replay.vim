@@ -92,6 +92,19 @@ fun! <sid>Is(os) "{{{1
         return has("unix") || has("macunix")
     endif
 endfu
+fun! <sid>StopRecord() "{{{1
+	" kill an existing screen recording session
+	if exists("s:pid")
+		if <sid>Is('unix')
+			call system('kill '. s:pid)
+		elseif <sid>Is('win')
+			call system('taskkill /pid '. s:pid)
+		endif
+	endif
+	if exists("s:isset_replay_record") && s:isset_replay_record == 0
+		unlet! g:replay_record
+	endif
+endfu
 fun! Replay#TagState(tag, bang) "{{{1
 	call <sid>Init()
     let tag=(empty(a:tag) ? 'Default' : a:tag)
@@ -108,6 +121,10 @@ endfun
 fun! Replay#TagStopState(tag) "{{{1
 	call <sid>Init()
     "let tag=(empty(a:tag) ? 'Default' : a:tag)
+	if exists("s:pid")
+		call <sid>StopRecord()
+		return
+	endif
 	let tag=(empty(a:tag) ? <sid>LastStartedRecording() : a:tag)
     if !exists("b:replay_data.".tag) "&& tag != 'Default'
         call <sid>WarningMsg("Tag " . tag . " not found!")
@@ -269,13 +286,7 @@ fun! Replay#ScreenCapture(on, ...) "{{{1
 			endif
 		endif
 	else
-		" kill an existing screen recording session
-		if exists("s:pid") && <sid>Is('unix')
-			call system('kill '. s:pid)
-		endif
-		if exists("s:isset_replay_record") && s:isset_replay_record == 0
-			unlet! g:replay_record
-		endif
+		call <sid>StopRecord()
 	endif
 endfu
 
