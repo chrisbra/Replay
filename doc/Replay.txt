@@ -136,6 +136,9 @@ third line of this document.
 ==============================================================================
 5. Replay History                                          *Replay-history*
 
+0.6 (unreleased):
+- -debug argument for |:ScreenCapture|
+
 0.5: Aug 14, 2013 {{{2
 
 - improvements for |:ScreenCapture| capture

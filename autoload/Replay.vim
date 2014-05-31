@@ -200,9 +200,9 @@ fun! Replay#ScreenCapture(on, ...) "{{{1
 
 		let args = []
 		if exists("a:1") && !empty(a:1)
-			let args = matchlist(a:1, '^\s*\(-shell\)\?\s*\(\f\+\)\?')
-			if !empty(args) && !empty(args[2])
-				let s:replay_record_param['file'] = args[2]
+			let args = matchlist(a:1, '^\s*\(-shell\)\?\s*\(-debug\)\?\s*\(\f\+\)\?')
+			if !empty(args) && !empty(args[3])
+				let s:replay_record_param['file'] = args[3]
 			endif
 		endif
 
@@ -259,6 +259,9 @@ fun! Replay#ScreenCapture(on, ...) "{{{1
 				exe "sleep 2"
 				let s:pid=system(cmd)
 				exe ":sh"
+			elseif !empty(args) && !empty(args[2])
+				echo cmd
+				let @+=cmd
 			else
 				let s:pid=system(cmd)
 				" sleep shortly
