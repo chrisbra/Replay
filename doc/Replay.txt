@@ -45,6 +45,7 @@ to a buffer.
                             recording session will stop.
                             You can use <Tab> to complete the available Tag
                             names
+                            If a |:ScreenCapture| session is active, kills it.
 
                                                                     *:Replay*
 :Replay [Tag]               Start Replaying your Session, that is identified
@@ -54,7 +55,7 @@ to a buffer.
                             names
 
                                                             *:ScreenCapture*
-:ScreenCapture[!] [-shell] [filename]
+:ScreenCapture[!] [-shell] [-debug] [filename]
 
                             If you have enabled screen capturing to video,
                             this command will start a screen capturing session
@@ -62,6 +63,8 @@ to a buffer.
                             If you used the -shell argument, a new shell will
                             be started, else the current Vim session will be
                             recorded.
+                            If -debug is used, it will only echo the command
+                            to execute (and copy it to the clipboard)
                             [filename] can optionally be given and
                             will be the name of the recorded session with the
                             date appended to it. If the filename ends with
@@ -138,6 +141,7 @@ third line of this document.
 
 0.6 (unreleased):
 - -debug argument for |:ScreenCapture|
+- |:StopRecord| also kills an active |:ScreenCapture|
 
 0.5: Aug 14, 2013 {{{2
 
