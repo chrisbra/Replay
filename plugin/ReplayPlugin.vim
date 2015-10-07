@@ -18,7 +18,7 @@ if exists("g:loaded_replay") || &cp || &ul == -1
   finish
 endif
 
-let g:loaded_replay      = 0.1
+let g:loaded_replay      = "0.1"
 let s:cpo                = &cpo
 set cpo&vim
 
