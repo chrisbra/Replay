@@ -250,11 +250,12 @@ fun! Replay#ScreenCapture(on, ...) "{{{1
 						\ '2> '. s:replay_record_param['log']  : '')
 			else
 				" fall back using ffmpeg/avconv
-				let cmd = printf('%s %s -i %s -vf crop=%d:%d:%d:%d %s/%s_%d.%s %s',
+				let cmd = printf('%s %s -s %sx%s -i %s+%d,%d %s/%s_%d.%s %s',
 						\ s:replay_record_param['exe'],
 						\ s:replay_record_param['opts'],
+						\ geom.width, geom.height,
 						\ (strlen($DISPLAY) == 2 ? $DISPLAY.'.0' : $DISPLAY),
-						\ geom.width, geom.height, geom.x, geom.y,
+						\ geom.x, geom.y,
 						\ (filewritable(getcwd()) == 2 ? getcwd() : '$HOME'),
 						\ s:replay_record_param['file'],
 						\ strftime('%Y%m%d', localtime()),
